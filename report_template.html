@@ -1,93 +1,115 @@
 <!doctype html>
 <html lang="uk">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Мої гроші — місячний звіт Олі</title>
-  <style>
-    :root { color-scheme: light; --ink:#183b36; --muted:#61716b; --paper:#f6f5ef;
-      --teal:#247465; --orange:#cb8150; --line:#e5e8df; }
-    * { box-sizing:border-box; }
-    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    main { max-width:1160px; padding:48px 32px 28px; margin:auto; }
-    .topline { display:flex; justify-content:space-between; align-items:center; gap:16px;
-      color:var(--muted); font-size:12px; letter-spacing:.1em; text-transform:uppercase; }
-    .brand { color:var(--teal); font-weight:750; }
-    .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--teal); margin-right:9px; }
-    header { display:flex; align-items:flex-end; justify-content:space-between; gap:28px; margin:26px 0 20px; }
-    h1 { margin:0; font-size:clamp(34px,5vw,54px); font-weight:650; line-height:1.12; letter-spacing:-.045em; }
-    .intro { margin:12px 0 0; color:var(--muted); }
-    .picker { flex-shrink:0; }
-    label { display:block; font-size:12px; color:var(--muted); margin-bottom:7px; }
-    select { width:260px; max-width:100%; font:inherit; font-size:15px; color:var(--ink);
-      background:#fff; border:1px solid #cdd6cd; border-radius:12px; padding:12px; cursor:pointer; }
-    select:focus-visible { outline:3px solid #b9d3c3; outline-offset:3px; }
-    .period { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
-      padding:0 0 24px; font-size:12px; color:var(--muted); }
-    .badge { color:#42614f; background:#e7eee2; border-radius:30px; padding:6px 12px; }
-    .badge.partial { color:#80522d; background:#f4e6d5; }
-    .cards { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
-    .card { background:#fff; border:1px solid var(--line); border-radius:22px; padding:28px; min-width:0; }
-    .card-1 { grid-column:1 / -1; }
-    .eyebrow { font-size:14px; font-weight:600; display:flex; gap:10px; align-items:center; }
-    .step { color:var(--teal); background:#edf3ec; font-size:11px; border-radius:7px; padding:4px 7px; }
-    .headline { font-size:clamp(32px,4vw,44px); font-weight:650; letter-spacing:-.04em; margin:18px 0 0;
-      font-variant-numeric:tabular-nums; line-height:1.15; }
-    .caption { font-size:12px; color:var(--muted); margin:6px 0 24px; }
-    .chart { list-style:none; padding:0; margin:0; display:grid; gap:14px; }
-    .bar-row { min-width:0; }
-    .bar-label { display:flex; justify-content:space-between; gap:12px; font-size:13px; margin-bottom:6px; }
-    .bar-label span { overflow-wrap:anywhere; }
-    .bar-label strong { white-space:nowrap; font-weight:600; font-variant-numeric:tabular-nums; }
-    .track { height:9px; background:#f0f2ed; border-radius:8px; overflow:hidden; }
-    .fill { display:block; height:100%; border-radius:8px; }
-    .teal { background:var(--teal); } .orange { background:var(--orange); }
-    .green { background:#92aa74; } .rose { background:#b35c5a; }
-    .conclusion { border-top:1px solid var(--line); margin:24px 0 0; padding-top:16px; font-size:13px; }
-    .note { margin:10px 0 0; font-size:12px; color:var(--muted); }
-    .empty { color:var(--muted); font-size:14px; }
-    footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; color:var(--muted);
-      font-size:11px; padding:24px 2px 0; }
-    [hidden] { display:none !important; }
-    @media (min-width:850px) {
-      .card-1 { display:grid; grid-template-columns:1fr 1.6fr; column-gap:48px; }
-      .card-1 .eyebrow { grid-column:1; grid-row:1; align-self:start; }
-      .card-1 .headline { grid-column:1; grid-row:2; align-self:end; margin-top:28px; }
-      .card-1 .caption { grid-column:1; grid-row:3; }
-      .card-1 .chart, .card-1 .empty { grid-column:2; grid-row:1 / 5; }
-      .card-1 .conclusion { grid-column:1; grid-row:4; margin-top:0; align-self:end; }
-    }
-    @media (max-width:650px) {
-      main { padding:26px 16px; } header { align-items:stretch; flex-direction:column; gap:20px; }
-      .cards { grid-template-columns:1fr; gap:16px; } .card { padding:22px; border-radius:18px; }
-      select { width:100%; } .period { align-items:flex-start; flex-direction:column; }
-      .topline { font-size:10px; }
-    }
-    @media print { body { background:#fff; } main { padding:0; } .card { break-inside:avoid; }
-      .picker { display:none; } .fill { print-color-adjust:exact; } }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Наші гроші — бюджет Олі та Марка</title>
+<style>
+:root{color-scheme:light;--ink:#233b32;--muted:#6d7972;--paper:#f5f4ee;--teal:#32654f;--orange:#c38b57;--line:#dfe3d9;--white:#fffefa}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,select{font:inherit}button{cursor:pointer}
+.masthead{border-bottom:1px solid var(--line);background:var(--white)}.masthead-inner{max-width:1240px;margin:auto;padding:21px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;gap:12px;align-items:center;font-size:18px;font-weight:700;letter-spacing:-.04em}.brand-mark{width:34px;height:34px;background:var(--ink);color:#e6edd5;border-radius:11px;display:grid;place-items:center;font-size:23px}.household{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted)}.avatars{display:flex;padding-left:7px}.avatar{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;margin-left:-7px;border:2px solid var(--white);background:#e5e9d8;color:var(--ink);font-size:11px;font-weight:700}.avatar:last-child{background:#eee0d3}
+main{max-width:1240px;padding:40px 40px 24px;margin:auto}header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:28px}.overline{text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:650;color:var(--teal);margin:0 0 12px}h1{margin:0;font:500 clamp(34px,4.8vw,54px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.045em}.intro{margin:12px 0 0;color:var(--muted);font-size:14px}.picker{flex-shrink:0}label{display:block;font-size:11px;color:var(--muted);margin-bottom:7px}select{width:240px;max-width:100%;color:var(--ink);background:var(--white);border:1px solid #cfd7ca;border-radius:12px;padding:12px 14px;cursor:pointer}:focus-visible{outline:3px solid #85aa8b;outline-offset:4px}
+.viewbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;padding-bottom:24px}.tabs{display:flex;padding:5px;background:#e9ece3;border-radius:14px;gap:4px}.tab{display:flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:9px 22px;border:0;border-radius:10px;color:var(--muted);background:transparent;font-size:13px;font-weight:600}.tab[aria-selected="true"]{background:var(--white);color:var(--ink);box-shadow:0 2px 5px #243b3210}.tab-dot{width:7px;height:7px;border-radius:50%;background:#7c9674}.tab:last-child .tab-dot{background:#c59772}.view-hint{font-size:11px;color:var(--muted)}
+.context{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:21px 24px;border:1px solid var(--line);background:#eeefe5;border-radius:16px;margin-bottom:22px}.context strong{display:block;font-size:14px;font-weight:600}.context p{margin:5px 0 0;color:var(--muted);font-size:12px;max-width:680px}.context-tag{flex-shrink:0;border:1px solid #cbd4c2;border-radius:30px;padding:5px 10px;color:var(--teal);font-size:10px;white-space:nowrap}
+.period{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:0 0 20px;font-size:11px;color:var(--muted)}.badge{color:#42614f;background:#e5ecdf;border-radius:30px;padding:6px 12px}.badge.partial{color:#865b35;background:#f1e5d6}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}.card{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:28px;min-width:0}.card-1{grid-column:1/-1}.eyebrow{font-size:14px;font-weight:600;display:flex;gap:10px;align-items:center}.step{color:var(--teal);background:#eaf0e3;font-size:10px;border-radius:6px;padding:4px 7px}.headline{font-size:clamp(30px,3.8vw,43px);font-weight:600;letter-spacing:-.055em;margin:20px 0 0;font-variant-numeric:tabular-nums;line-height:1.15}.caption{font-size:11px;color:var(--muted);margin:7px 0 26px}
+.chart{list-style:none;padding:0;margin:0;display:grid;gap:13px}.bar-row{min-width:0}.bar-label{display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:7px}.bar-label span{overflow-wrap:anywhere}.bar-label strong{white-space:nowrap;font-weight:600;font-variant-numeric:tabular-nums}.track{height:7px;background:#edf0e8;border-radius:8px;overflow:hidden}.fill{display:block;height:100%;border-radius:8px}.teal{background:var(--teal)}.orange{background:var(--orange)}.green{background:#99aa77}.rose{background:#b96c61}.conclusion{border-top:1px solid var(--line);margin:24px 0 0;padding-top:16px;font-size:12px}.note{margin:10px 0 0;font-size:11px;color:var(--muted)}.empty{color:var(--muted);font-size:14px}
+.welcome{background:var(--ink);color:#f9f8ee;border-radius:20px;padding:32px;display:grid;grid-template-columns:1.4fr 1fr;gap:32px;margin-bottom:20px}.welcome .overline{color:#bdcba6}h2{margin:0;font:500 clamp(28px,3.4vw,38px)/1.15 Georgia,"Times New Roman",serif;letter-spacing:-.035em}.welcome p{margin:14px 0 0;font-size:13px;color:#ccd7c9;max-width:440px}.split{align-self:center;padding:24px;background:#ffffff09;border:1px solid #ffffff20;border-radius:14px}.split-title{font-size:11px;color:#d2dac9;margin-bottom:16px}.split-people{display:flex;justify-content:space-between;gap:16px}.split-people span{font-size:12px;color:#d2dac9}.split-people strong{display:block;font-size:30px;color:#f9f8ee;letter-spacing:-.04em;font-weight:500}.split-track{display:flex;height:6px;border-radius:6px;overflow:hidden;gap:3px;margin-top:18px}.split-track span{width:50%;background:#afc194}.split-track span:last-child{background:#d0a77e}
+.pending-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}.pending-card{padding:23px;border:1px solid var(--line);border-radius:16px;background:var(--white)}.pending-card h3{font-size:12px;font-weight:500;color:var(--muted);margin:0}.pending-value{font-size:32px;line-height:1;margin:20px 0 14px;color:#9ba592}.pending-card p{font-size:11px;color:var(--muted);margin:0}.next-step{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;justify-content:space-between;align-items:center;gap:24px}.next-step strong{font-size:14px;font-weight:600}.next-step p{color:var(--muted);font-size:12px;margin:6px 0 0;max-width:660px}.action{border:0;border-radius:10px;padding:12px 18px;background:var(--teal);color:#fffefa;font-size:12px;font-weight:600;flex-shrink:0}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:10px;padding:28px 2px 0}[hidden]{display:none!important}
+@media(min-width:850px){.card-1{display:grid;grid-template-columns:1fr 1.6fr;column-gap:56px}.card-1 .eyebrow{grid-column:1;grid-row:1;align-self:start}.card-1 .headline{grid-column:1;grid-row:2;align-self:end;margin-top:28px}.card-1 .caption{grid-column:1;grid-row:3}.card-1 .chart,.card-1 .empty{grid-column:2;grid-row:1/5}.card-1 .conclusion{grid-column:1;grid-row:4;margin-top:0;align-self:end}}
+@media(max-width:650px){.masthead-inner{padding:16px 20px}.household-label{display:none}main{padding:28px 18px 20px}header{align-items:stretch;flex-direction:column;gap:22px;margin-bottom:22px}.cards,.pending-grid,.welcome{grid-template-columns:1fr}.cards{gap:16px}.card{padding:22px;border-radius:16px}select{width:100%}.viewbar{gap:10px}.tabs{width:100%}.tab{padding:9px 8px;flex:1}.view-hint{padding-left:4px}.context{padding:18px;flex-direction:column;gap:12px}.period{align-items:flex-start;flex-direction:column}.welcome{padding:24px;gap:24px}.pending-grid{gap:10px}.pending-card{display:grid;grid-template-columns:1fr auto;gap:8px;padding:18px}.pending-card p{grid-column:1/-1}.pending-value{margin:0;font-size:24px}.next-step{padding:20px;flex-direction:column;align-items:stretch;gap:18px}footer{flex-direction:column}}
+@media(prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}.action:hover{background:#234d3a}}
+@media print{body{background:#fff}main{padding:0}.card{break-inside:avoid}.picker,.tabs,.action,.view-hint{display:none}.fill{print-color-adjust:exact}}
+</style>
 </head>
 <body>
+<div class="masthead"><div class="masthead-inner">
+<div class="brand"><span class="brand-mark" aria-hidden="true">↗</span>Наші гроші</div>
+<div class="household"><span class="household-label">Бюджет Олі та Марка</span><div class="avatars" aria-hidden="true"><span class="avatar">О</span><span class="avatar">М</span></div></div>
+</div></div>
 <main>
-  <div class="topline"><span class="brand"><span class="dot"></span>Мої гроші</span><span>Особистий звіт · Оля</span></div>
-  <header>
-    <div><h1>Місяць у трьох відповідях.</h1><p class="intro">Витрати, заощадження та простір для змін.</p></div>
-    <div class="picker"><label for="month">Обери місяць</label><select id="month" aria-controls="months">$options</select></div>
-  </header>
-  <noscript><p>Увімкни JavaScript, щоб перемикати місяці; зараз показано останній місяць.</p></noscript>
-  <div id="months" aria-live="polite">$panels</div>
-  <footer><span>Усі суми у польських злотих · дані до $through</span><span>Зберігається у цьому файлі · працює без інтернету</span></footer>
+<header>
+<div><p class="overline">Менше зайвих витрат · більше спільних планів</p><h1>Гроші під контролем.</h1><p class="intro" id="view-description">Особистий бюджет Олі. Місяць у трьох відповідях.</p></div>
+<div class="picker"><label for="month">Період звіту</label><select id="month" aria-controls="months">$options</select></div>
+</header>
+<div class="viewbar">
+<div class="tabs" role="tablist" aria-label="Чий бюджет показати">
+<button type="button" class="tab" id="tab-shared" role="tab" aria-selected="false" aria-controls="view-shared" tabindex="-1" data-view="shared">Загальна</button>
+<button type="button" class="tab" id="tab-olya" role="tab" aria-selected="true" aria-controls="view-olya" data-view="olya"><span class="tab-dot" aria-hidden="true"></span>Оля</button>
+<button type="button" class="tab" id="tab-marko" role="tab" aria-selected="false" aria-controls="view-marko" tabindex="-1" data-view="marko"><span class="tab-dot" aria-hidden="true"></span>Марко</button>
+</div><span class="view-hint">Локальний макет · перегляд Олі</span>
+</div>
+<noscript><p>Увімкни JavaScript, щоб перемикати вкладки та місяці; зараз показано останній місяць Олі.</p></noscript>
+<div id="view-olya" role="tabpanel" aria-labelledby="tab-olya" tabindex="0">
+<div class="context"><div><strong>Твій особистий звіт</strong><p>Тут — наявна виписка Олі. Розподіл спільних витрат ще не підключено; історичні суми збережено.</p></div><span class="context-tag">Дані Олі</span></div>
+<div id="months" aria-live="polite">$panels</div>
+</div>
+<div id="view-shared" role="tabpanel" aria-labelledby="tab-shared" tabindex="0" hidden>
+<div class="welcome"><div><p class="overline">Спільний бюджет</p><h2>Спільне — навпіл.<br>Особисте — у кожного своє.</h2><p>Оренда та спільні продукти діляться порівну. Тут будуть загальні підсумки й взаєморозрахунки між вами.</p></div>
+<div class="split"><div class="split-title">Домовленість про спільні витрати</div><div class="split-people"><span>Оля<strong>50%</strong></span><span>Марко<strong>50%</strong></span></div><div class="split-track" aria-hidden="true"><span></span><span></span></div></div>
+</div>
+<div class="period"><span class="badge partial">Спільний облік ще не підключено</span><span class="selected-period"></span></div>
+<div class="pending-grid">
+<div class="pending-card"><h3>Спільні витрати</h3><div class="pending-value" aria-label="Немає даних">—</div><p>Лише спільні покупки за місяць</p></div>
+<div class="pending-card"><h3>Оренда та продукти</h3><div class="pending-value" aria-label="Немає даних">—</div><p>Спільна сума та частка кожного</p></div>
+<div class="pending-card"><h3>Хто кому компенсує</h3><div class="pending-value" aria-label="Немає даних">—</div><p>Після врахування оплат і компенсацій</p></div>
+</div>
+<div class="next-step"><div><strong>Перший крок до спільної картини</strong><p>Потрібні виписка Марка та дата початку спільного обліку. Тут будуть лише спільні витрати; особисті витрати й доходи залишаються у власних звітах.</p></div><button type="button" class="action" data-open-olya>Переглянути свій звіт ↗</button></div>
+</div>
+<div id="view-marko" role="tabpanel" aria-labelledby="tab-marko" tabindex="0" hidden>
+<div class="welcome"><div><p class="overline">Особистий бюджет · Марко</p><h2>Особисте залишається<br>особистим.</h2><p>Це приватна вкладка Марка. Його особисті витрати, доходи й заощадження доступні лише йому.</p></div><div class="split"><div class="split-title">Правила доступу</div><h2>Лише для Марка</h2><p>Спільні покупки та взаєморозрахунки — у загальній вкладці.</p></div></div>
+<div class="period"><span class="badge">Приватна вкладка</span><span class="selected-period"></span></div>
+<div class="next-step"><div><strong>Кожен бачить своє та спільне</strong><p>Зараз це локальний макет для Олі. Окремі входи й перевірка доступу на сервері ще попереду; даних Марка в цьому файлі немає.</p></div><button type="button" class="action" data-open-olya>Повернутися до свого звіту ↗</button></div>
+</div>
+<footer><span>Усі суми у злотих · виписка Олі до $through</span><span>Локальний звіт · працює без інтернету</span></footer>
 </main>
 <script>
-  const picker = document.getElementById('month');
-  function showMonth() {
-    document.querySelectorAll('.month-panel').forEach(panel => {
-      panel.hidden = panel.dataset.month !== picker.value;
-    });
-  }
-  picker.addEventListener('change', showMonth);
-  showMonth();
+const picker = document.getElementById('month');
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+const descriptions = {
+  shared: 'Лише спільні витрати та взаєморозрахунки. Особисті дані — у власних звітах.',
+  olya: 'Особистий бюджет Олі. Місяць у трьох відповідях.',
+  marko: 'Приватна вкладка Марка. Особисті дані доступні лише власнику.'
+};
+function showMonth() {
+  document.querySelectorAll('.month-panel').forEach(panel => {
+    panel.hidden = panel.dataset.month !== picker.value;
+  });
+  document.querySelectorAll('.selected-period').forEach(label => {
+    label.textContent = 'Обраний період: ' + picker.selectedOptions[0].textContent;
+  });
+}
+function showView(view, moveFocus = false) {
+  tabs.forEach(tab => {
+    const selected = tab.dataset.view === view;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+    if (selected && moveFocus) tab.focus();
+  });
+  document.getElementById('view-description').textContent = descriptions[view];
+}
+tabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => showView(tab.dataset.view));
+  tab.addEventListener('keydown', event => {
+    let next;
+    if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+    if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = tabs.length - 1;
+    if (next !== undefined) {
+      event.preventDefault();
+      showView(tabs[next].dataset.view, true);
+    }
+  });
+});
+document.querySelectorAll('[data-open-olya]').forEach(button => {
+  button.addEventListener('click', () => showView('olya', true));
+});
+picker.addEventListener('change', showMonth);
+showMonth();
 </script>
 </body>
 </html>
