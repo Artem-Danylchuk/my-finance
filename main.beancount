@@ -21,3 +21,48 @@ option "operating_currency" "PLN"
   Equity:Початковий-Залишок  -4500.00 PLN
 
 include "transactions.beancount"
+
+; Суми у PLN; місяць містить і рік, щоб різні роки не змішувалися.
+2026-08-01 query "Витрати за категоріями" "
+  SELECT yearmonth(date) AS month, account AS category,
+         sum(number) AS expenses_pln
+  WHERE account ~ '^Expenses:' AND currency = 'PLN'
+  GROUP BY month, category
+  ORDER BY month, category
+"
+
+; Початковий капітал виключено. При нульовому доході percent = NULL.
+; last_operation — дата останньої операції, а не гарантія повноти виписки.
+2026-08-01 query "Норма заощаджень" "
+  SELECT month, income_pln, expenses_pln,
+         income_pln - expenses_pln AS saved_pln,
+         round(100 * (income_pln - expenses_pln) / income_pln, 1) AS percent,
+         last_operation
+  FROM (
+    SELECT yearmonth(date) AS month,
+           -sum(number * int(account ~ '^Income:')) AS income_pln,
+           sum(number * int(account ~ '^Expenses:')) AS expenses_pln,
+           max(date) AS last_operation
+    WHERE account ~ '^(Income|Expenses):' AND currency = 'PLN'
+    GROUP BY month
+  )
+  ORDER BY month
+"
+
+; Фіксованість визначає лише #fixed, який імпортер бере з rules.csv.
+2026-08-01 query "Фіксовані і змінні" "
+  SELECT yearmonth(date) AS month,
+         sum(number * int(coalesce('fixed' IN tags, FALSE))) AS fixed_pln,
+         sum(number * int(NOT coalesce('fixed' IN tags, FALSE))) AS variable_pln
+  WHERE account ~ '^Expenses:' AND currency = 'PLN'
+  GROUP BY month
+  ORDER BY month
+"
+
+2026-08-01 query "Без категорії" "
+  SELECT yearmonth(date) AS month, narration AS description,
+         count(*) AS operations, sum(number) AS expenses_pln
+  WHERE account = 'Expenses:Без-Категорії' AND currency = 'PLN'
+  GROUP BY month, description
+  ORDER BY month, description
+"
