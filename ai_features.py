@@ -179,13 +179,18 @@ def receipt_draft(path, today=None):
     return result
 
 
-def answer_question(question, *, through, root=report.ROOT):
+def answer_question(question, *, through, root=report.ROOT, month_hint=None, scope_hint="personal"):
     if not question.strip() or len(question) > 1000:
         raise ValueError("Питання має містити від 1 до 1000 символів.")
     allowed = categories(root)
+    month_hint = month_hint or through.replace(day=1)
+    if scope_hint not in {"personal", "shared"} or month_hint.day != 1 or month_hint > through:
+        raise ValueError("Некоректний період або бюджет питання.")
     filters = structured(
-        f"Перетвори питання про витрати на фільтр. Поточний рік {through.year}, місяць {through:%Y-%m}. "
-        "'Ми/наш' означає shared, 'я/мої' — personal. Без займенника personal. "
+        f"Перетвори питання про витрати на фільтр. Рік за замовчуванням {month_hint.year}, "
+        f"обраний місяць {month_hint:%Y-%m}, обраний бюджет {scope_hint}. "
+        "Якщо питання явно вказує інший місяць або рік, використовуй їх; інакше обраний місяць. "
+        "'Ми/наш' означає shared, 'я/мої' — personal. Без займенника використовуй обраний бюджет. "
         "Особисті дані Марка закриті: якщо просять їх або не витрати, supported=false. "
         "Таксі — kind=taxi; категорія або всі витрати — kind=category/all. "
         "Для category вибери дозволену категорію; інакше category=null. Не пиши SQL чи суми.",
@@ -239,9 +244,21 @@ def answer_question(question, *, through, root=report.ROOT):
         rows = [(account, amount) for account, amount in rows if account == filters["category"]]
     total = sum((amount for _, amount in rows), report.ZERO)
     scope_label = "Спільні витрати" if filters["scope"] == "shared" else "Твої витрати"
-    return {"answer": f"{scope_label}, {report.month_label(month)}: {report.money(total)}. "
-                      f"Дані Олі до {through:%d.%m.%Y}; спільні включають вигадані дані Марка "
-                      f"до {context['marko_through']:%d.%m.%Y}. Таксі за вашою домовленістю особисте.",
+    if filters["kind"] == "taxi":
+        scope_label += " на таксі"
+    elif filters["kind"] == "category":
+        scope_label += f" · {report.category_label(filters['category'])}"
+    end = month.replace(day=calendar.monthrange(month.year, month.month)[1])
+    coverage = f"Дані Олі до {min(through, end):%d.%m.%Y}."
+    if filters["scope"] == "shared":
+        coverage += f" Дані Марка вигадані, до {min(end, context['marko_through']):%d.%m.%Y}."
+    partial = through < end or (filters["scope"] == "shared" and (
+        context["marko_through"] < end or context["since"] > month or context["marko_start"] > month))
+    if partial:
+        coverage += " Неповний місяць, без прогнозу."
+    if filters["kind"] == "taxi" and filters["scope"] == "shared":
+        coverage += " Таксі за вашою домовленістю особисте; витрати Марка на таксі тут недоступні."
+    return {"answer": f"{scope_label}, {report.month_label(month)}: {report.money(total)}. {coverage}",
             "amount_pln": str(total), "filters": filters}
 
 

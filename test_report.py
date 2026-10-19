@@ -70,8 +70,8 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(sum(tag == "article" for tag, _ in elements), 6)
         self.assertEqual(len(Elements(html).select_options["month"]), 2)
         self.assertFalse(any("src" in attrs or "href" in attrs for _, attrs in elements))
-        self.assertIn("connect-src 'none'", html)
-        self.assertNotIn("fetch(", html)
+        self.assertIn("connect-src 'self'", html)
+        self.assertIn("fetch('/api/ask'", html)
         # Coverage can extend beyond the last purchase: do not infer partiality from it.
         full = report.render_report(results, date(2026, 9, 30))
         self.assertNotIn("Неповний місяць", full)

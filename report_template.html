@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Наші гроші — бюджет Олі та Марка</title>
 <script>
 try { document.documentElement.dataset.theme = localStorage.getItem('finance-theme') || 'system'; } catch (_) {}
@@ -31,6 +31,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:v
 :root[data-theme="dark"] .badge{background:#314c37;color:#c8e2c1}:root[data-theme="dark"] .badge.partial{background:#4b3a2b;color:#f0c395}:root[data-theme="dark"] .action{background:#365e42;color:#f3f5ee}:root[data-theme="dark"] .welcome{background:#263c2d}:root[data-theme="dark"] .brand-mark{background:#a9c899;color:#18251d}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){color-scheme:dark;--ink:#e0e9df;--muted:#b1beb4;--paper:#17211d;--teal:#9fcaa9;--orange:#d2a579;--line:#3c4c41;--white:#222f28}:root:not([data-theme="light"]):not([data-theme="dark"]) .tabs,:root:not([data-theme="light"]):not([data-theme="dark"]) .context,:root:not([data-theme="light"]):not([data-theme="dark"]) .track,:root:not([data-theme="light"]):not([data-theme="dark"]) .step{background:#2c3d31}:root:not([data-theme="light"]):not([data-theme="dark"]) .badge{background:#314c37;color:#c8e2c1}:root:not([data-theme="light"]):not([data-theme="dark"]) .badge.partial{background:#4b3a2b;color:#f0c395}:root:not([data-theme="light"]):not([data-theme="dark"]) .action{background:#365e42;color:#f3f5ee}}
 @media print{.tools,.goal-fields{display:none}}
+.assistant{margin:0 0 24px;border:1px solid var(--line);background:var(--white);border-radius:16px;padding:18px 22px}.assistant summary{cursor:pointer;font-weight:600;min-height:28px}.assistant summary span{font-weight:400;font-size:12px;color:var(--muted);margin-left:10px}.assistant textarea{display:block;width:100%;resize:vertical;min-height:90px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit}.assistant label{font-size:13px;margin-top:16px}.assistant-examples{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.assistant-examples button{font-size:12px;padding:8px 10px}.assistant-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:12px}.assistant button:disabled{cursor:default;opacity:.55}.assistant-messages{display:grid;gap:10px;margin-top:16px}.assistant-message{padding:14px 16px;border:1px solid var(--line);border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}.assistant-message strong{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}.assistant-message p{margin:0}.assistant-message.user{background:var(--paper)}.assistant [role="status"]{font-size:12px;color:var(--muted)}@media(max-width:650px){.assistant{padding:16px}.assistant summary span{display:block;margin:5px 0 0}.assistant-actions .action{width:100%}}@media print{.assistant{display:none}}
 </style>
 </head>
 <body>
@@ -57,6 +58,23 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:v
 </div><span class="view-hint">Локальний звіт · перегляд Олі</span>
 </div>
 <noscript><p>Увімкни JavaScript, щоб перемикати вкладки та місяці; зараз показано останній місяць Олі.</p></noscript>
+<details class="assistant" id="assistant">
+<summary>AI-асистент <span id="assistant-provider">Питання про твої та спільні витрати</span></summary>
+<p class="note" id="assistant-scope"></p>
+<p role="status" id="assistant-status">Перевіряємо підключення…</p>
+<button type="button" class="secondary" id="assistant-open-web" hidden>Відкрити вебверсію з AI</button>
+<form id="assistant-form">
+<label for="assistant-question">Що хочеш дізнатися?</label>
+<textarea id="assistant-question" maxlength="1000" placeholder="Наприклад: скільки я витратила на таксі у жовтні?" required disabled></textarea>
+<div class="assistant-examples" aria-label="Приклади питань">
+<button type="button" class="secondary" data-ai-question="Скільки я витратила на таксі?" disabled>Моє таксі</button>
+<button type="button" class="secondary" data-ai-question="Скільки ми витратили на продукти?" disabled>Спільні продукти</button>
+<button type="button" class="secondary" data-ai-question="Які мої загальні витрати?" disabled>Мої витрати</button>
+</div>
+<div class="assistant-actions"><button type="submit" class="action" id="assistant-submit" disabled>Запитати</button><span class="note">Особисті витрати Марка закриті.</span></div>
+</form>
+<div class="assistant-messages" id="assistant-messages" role="log" aria-label="Питання й відповіді асистента" aria-live="polite"></div>
+</details>
 <div id="view-olya" role="tabpanel" aria-labelledby="tab-olya" tabindex="0">
 <div class="context"><div><strong>Твій особистий звіт</strong><p>$context_note</p></div><span class="context-tag">Дані Олі</span></div>
 <div id="months" aria-live="polite">$panels</div>
@@ -148,6 +166,80 @@ function updateGoal() {
 goalMonthly.addEventListener('input', updateGoal);
 goalSaved.addEventListener('input', updateGoal);
 updateGoal();
+const assistant = document.getElementById('assistant');
+const aiStatus = document.getElementById('assistant-status');
+const aiForm = document.getElementById('assistant-form');
+const aiQuestion = document.getElementById('assistant-question');
+const aiSubmit = document.getElementById('assistant-submit');
+const aiExamples = [...document.querySelectorAll('[data-ai-question]')];
+const aiMessages = document.getElementById('assistant-messages');
+const serverMeta = document.querySelector('meta[name="ai-server"]');
+let aiConfig = null;
+try { aiConfig = serverMeta ? JSON.parse(serverMeta.content) : null; } catch (_) {}
+const aiReady = Boolean(aiConfig && aiConfig.configured && aiConfig.csrf);
+aiQuestion.disabled = !aiReady; aiSubmit.disabled = !aiReady;
+aiExamples.forEach(button => { button.disabled = !aiReady; });
+if (aiConfig) {
+  aiStatus.textContent = aiConfig.message;
+  document.getElementById('assistant-provider').textContent = aiConfig.provider + (aiReady ? ' · налаштовано' : ' · потрібне налаштування');
+  assistant.open = aiReady;
+} else {
+  aiStatus.textContent = 'Для питань до AI відкрий локальну вебверсію звіту. Звичайний HTML продовжує працювати без інтернету.';
+  const webButton = document.getElementById('assistant-open-web');
+  webButton.hidden = false;
+  webButton.addEventListener('click', () => window.location.assign('http://127.0.0.1:5051/'));
+}
+function updateAssistantContext() {
+  assistant.hidden = currentView === 'marko';
+  document.getElementById('assistant-scope').textContent = picker.selectedOptions[0].textContent + ' · ' + (currentView === 'shared' ? 'Спільний бюджет' : 'Твій бюджет') + '. Якщо не вказати інший період у питанні, асистент використає цей.';
+}
+aiExamples.forEach(button => button.addEventListener('click', () => {
+  aiQuestion.value = button.dataset.aiQuestion; aiQuestion.focus();
+}));
+function addAiMessage(label, message, isUser = false) {
+  const item = document.createElement('div');
+  item.className = 'assistant-message' + (isUser ? ' user' : '');
+  const title = document.createElement('strong'); title.textContent = label;
+  const text = document.createElement('p'); text.textContent = message;
+  item.append(title, text); aiMessages.append(item);
+}
+aiForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!aiReady || aiSubmit.disabled) return;
+  const question = aiQuestion.value.trim();
+  if (!question) { aiQuestion.focus(); return; }
+  const month = picker.value;
+  const scope = currentView === 'shared' ? 'shared' : 'personal';
+  addAiMessage('Ти · ' + picker.selectedOptions[0].textContent, question, true);
+  aiSubmit.disabled = true; aiQuestion.disabled = true;
+  aiExamples.forEach(button => { button.disabled = true; });
+  aiForm.setAttribute('aria-busy', 'true');
+  aiStatus.textContent = 'Готую відповідь…';
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 130000);
+  try {
+    const response = await fetch('/api/ask', {
+      method: 'POST', mode: 'same-origin', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/json', 'X-Finance-CSRF': aiConfig.csrf},
+      body: JSON.stringify({question, month, scope}), signal: controller.signal
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Не вдалося отримати відповідь.');
+    if (typeof result.answer !== 'string') throw new Error('Асистент повернув неочікувану відповідь.');
+    addAiMessage('AI-асистент', result.answer);
+    aiQuestion.value = '';
+    aiStatus.textContent = 'Відповідь готова.';
+  } catch (error) {
+    const message = error.name === 'AbortError' ? 'Час очікування минув. Запит не повторюється автоматично.' : (error instanceof TypeError ? 'Немає зв’язку з локальним застосунком. Перевір, чи він запущений.' : error.message);
+    addAiMessage('Не вдалося відповісти', message);
+    aiStatus.textContent = 'Перевір повідомлення й повтори запит за потреби.';
+  } finally {
+    clearTimeout(timeout);
+    aiSubmit.disabled = false; aiQuestion.disabled = false;
+    aiExamples.forEach(button => { button.disabled = false; });
+    aiForm.removeAttribute('aria-busy');
+  }
+});
 const descriptions = {
   shared: 'Лише спільні витрати та взаєморозрахунки. Особисті дані — у власних звітах.',
   olya: 'Особистий бюджет Олі. Місяць у трьох відповідях.',
@@ -161,6 +253,7 @@ function showMonth() {
     label.textContent = 'Обраний період: ' + picker.selectedOptions[0].textContent;
   });
   updateExports();
+  updateAssistantContext();
 }
 function showView(view, moveFocus = false) {
   currentView = view;
@@ -173,6 +266,7 @@ function showView(view, moveFocus = false) {
   });
   document.getElementById('view-description').textContent = descriptions[view];
   updateExports();
+  updateAssistantContext();
 }
 tabs.forEach((tab, index) => {
   tab.addEventListener('click', () => showView(tab.dataset.view));
