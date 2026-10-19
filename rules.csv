@@ -15,3 +15,6 @@ ZTM,Expenses:Транспорт,так
 Netflix,Expenses:Підписки,так
 Spotify,Expenses:Підписки,так
 Claude.ai,Expenses:Підписки,так
+Play,Expenses:Телефон,так
+Rossmann,Expenses:Косметика-Та-Побутова-Хімія,ні
+Decathlon,Expenses:Спорт,ні
