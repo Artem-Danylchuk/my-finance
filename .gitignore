@@ -4,3 +4,5 @@ report.html
 demo-marko.beancount
 .venv/
 __pycache__/
+.env.local
+.private/

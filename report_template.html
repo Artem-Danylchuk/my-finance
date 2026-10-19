@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Наші гроші — бюджет Олі та Марка</title>
+<script>
+try { document.documentElement.dataset.theme = localStorage.getItem('finance-theme') || 'system'; } catch (_) {}
+</script>
 <style>
 :root{color-scheme:light;--ink:#233b32;--muted:#6d7972;--paper:#f5f4ee;--teal:#32654f;--orange:#c38b57;--line:#dfe3d9;--white:#fffefa}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,select{font:inherit}button{cursor:pointer}
@@ -22,6 +25,12 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:v
 @media(max-width:650px){.masthead-inner{padding:16px 20px}.household-label{display:none}main{padding:28px 18px 20px}header{align-items:stretch;flex-direction:column;gap:22px;margin-bottom:22px}.cards,.pending-grid,.welcome{grid-template-columns:1fr}.cards{gap:16px}.card{padding:22px;border-radius:16px}select{width:100%}.viewbar{gap:10px}.tabs{width:100%}.tab{padding:9px 8px;flex:1}.view-hint{padding-left:4px}.context{padding:18px;flex-direction:column;gap:12px}.period{align-items:flex-start;flex-direction:column}.welcome{padding:24px;gap:24px}.pending-grid{gap:10px}.pending-card{display:grid;grid-template-columns:1fr auto;gap:8px;padding:18px}.pending-card p{grid-column:1/-1}.pending-value{margin:0;font-size:24px}.next-step{padding:20px;flex-direction:column;align-items:stretch;gap:18px}footer{flex-direction:column}}
 @media(prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}.action:hover{background:#234d3a}}
 @media print{body{background:#fff}main{padding:0}.card{break-inside:avoid}.picker,.tabs,.action,.view-hint{display:none}.fill{print-color-adjust:exact}}
+.tools{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:0 0 22px}.tools select{width:150px}.secondary{font:inherit;border:1px solid var(--line);border-radius:10px;padding:11px 16px;background:var(--white);color:var(--ink);min-height:44px}.secondary:disabled{opacity:.5;cursor:default}.goal{margin:24px 0;padding:24px;background:var(--white);border:1px solid var(--line);border-radius:16px}.goal h2{font-size:28px}.goal label{font-size:12px}.goal input{font:inherit;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;width:240px;max-width:100%;min-height:44px}.goal-fields{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0}.goal progress{width:100%;height:18px;accent-color:var(--teal)}.goal-status{font-variant-numeric:tabular-nums}.goal p{font-size:13px}.goal .note{font-size:11px}.avatar{color:#233b32}
+:root[data-theme="dark"]{color-scheme:dark;--ink:#e0e9df;--muted:#b1beb4;--paper:#17211d;--teal:#9fcaa9;--orange:#d2a579;--line:#3c4c41;--white:#222f28}
+:root[data-theme="dark"] .tabs,:root[data-theme="dark"] .context,:root[data-theme="dark"] .track,:root[data-theme="dark"] .step{background:#2c3d31}
+:root[data-theme="dark"] .badge{background:#314c37;color:#c8e2c1}:root[data-theme="dark"] .badge.partial{background:#4b3a2b;color:#f0c395}:root[data-theme="dark"] .action{background:#365e42;color:#f3f5ee}:root[data-theme="dark"] .welcome{background:#263c2d}:root[data-theme="dark"] .brand-mark{background:#a9c899;color:#18251d}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){color-scheme:dark;--ink:#e0e9df;--muted:#b1beb4;--paper:#17211d;--teal:#9fcaa9;--orange:#d2a579;--line:#3c4c41;--white:#222f28}:root:not([data-theme="light"]):not([data-theme="dark"]) .tabs,:root:not([data-theme="light"]):not([data-theme="dark"]) .context,:root:not([data-theme="light"]):not([data-theme="dark"]) .track,:root:not([data-theme="light"]):not([data-theme="dark"]) .step{background:#2c3d31}:root:not([data-theme="light"]):not([data-theme="dark"]) .badge{background:#314c37;color:#c8e2c1}:root:not([data-theme="light"]):not([data-theme="dark"]) .badge.partial{background:#4b3a2b;color:#f0c395}:root:not([data-theme="light"]):not([data-theme="dark"]) .action{background:#365e42;color:#f3f5ee}}
+@media print{.tools,.goal-fields{display:none}}
 </style>
 </head>
 <body>
@@ -34,6 +43,12 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:v
 <div><p class="overline">Менше зайвих витрат · більше спільних планів</p><h1>Гроші під контролем.</h1><p class="intro" id="view-description">Особистий бюджет Олі. Місяць у трьох відповідях.</p></div>
 <div class="picker"><label for="month">Період звіту</label><select id="month" aria-controls="months">$options</select></div>
 </header>
+<div class="tools" aria-label="Оформлення та експорт">
+<div><label for="theme">Оформлення</label><select id="theme"><option value="system">Як у системі</option><option value="light">Світла тема</option><option value="dark">Темна тема</option></select></div>
+<button type="button" class="secondary" id="export-xlsx">Завантажити Excel</button>
+<button type="button" class="secondary" id="export-csv">Завантажити CSV</button>
+<span class="note" id="export-hint">Експорт обраної вкладки й місяця</span>
+</div>
 <div class="viewbar">
 <div class="tabs" role="tablist" aria-label="Чий бюджет показати">
 <button type="button" class="tab" id="tab-shared" role="tab" aria-selected="false" aria-controls="view-shared" tabindex="-1" data-view="shared">Загальна</button>
@@ -45,6 +60,13 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:v
 <div id="view-olya" role="tabpanel" aria-labelledby="tab-olya" tabindex="0">
 <div class="context"><div><strong>Твій особистий звіт</strong><p>$context_note</p></div><span class="context-tag">Дані Олі</span></div>
 <div id="months" aria-live="polite">$panels</div>
+<div class="goal" aria-labelledby="goal-title"><h2 id="goal-title">Подушка на шість місяців</h2>
+$goal_html
+<div class="goal-fields"><div><label for="goal-monthly">Твої місячні базові витрати, PLN (необов’язково)</label><input id="goal-monthly" inputmode="decimal" autocomplete="off" placeholder="Наприклад, 4000,00"></div>
+<div><label for="goal-saved">Вже відкладено саме на подушку, PLN</label><input id="goal-saved" inputmode="decimal" autocomplete="off" placeholder="Вкажи суму накопичень"></div></div>
+<progress id="goal-progress" max="100" value="0" aria-label="Прогрес подушки" hidden></progress>
+<p class="goal-status" id="goal-status" aria-live="polite">Вкажи суму накопичень, щоб побачити прогрес.</p>
+<p class="note">Ця ціль стосується останньої дати звіту. Введені значення зберігаються в цьому браузері й не змінюють облік. Залишок банку не вважається подушкою автоматично.</p></div>
 </div>
 <div id="view-shared" role="tabpanel" aria-labelledby="tab-shared" tabindex="0" hidden>
 <div class="context"><div><strong>Демонстрація спільного бюджету</strong><p>Дані Марка вигадані. Оренда та продукти від 1 жовтня діляться 50/50; інші покупки — особисті. Підсумок попередній, доки виписки не охоплюють повний місяць.</p></div><span class="context-tag">Демо · Марко</span></div>
@@ -62,6 +84,70 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:v
 <script>
 const picker = document.getElementById('month');
 const tabs = [...document.querySelectorAll('[role="tab"]')];
+const exportsByView = $export_data;
+const exportButtons = ['xlsx', 'csv'].map(format => document.getElementById('export-' + format));
+let currentView = 'olya';
+function updateExports() {
+  const available = Boolean(exportsByView[currentView + ':' + picker.value]);
+  exportButtons.forEach(button => { button.disabled = !available; });
+  document.getElementById('export-hint').textContent = available ? 'Експорт обраної вкладки й місяця' : 'За цей період або для цієї вкладки експорт недоступний';
+}
+['xlsx', 'csv'].forEach(format => {
+  document.getElementById('export-' + format).addEventListener('click', () => {
+    const data = exportsByView[currentView + ':' + picker.value];
+    if (!data) return;
+    const bytes = Uint8Array.from(atob(data[format]), char => char.charCodeAt(0));
+    const blob = new Blob([bytes], {type: format === 'csv' ? 'text/csv;charset=utf-8' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'finance-' + currentView + '-' + picker.value + '.' + format;
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+});
+const themePicker = document.getElementById('theme');
+themePicker.value = ['system', 'light', 'dark'].includes(document.documentElement.dataset.theme) ? document.documentElement.dataset.theme : 'system';
+themePicker.addEventListener('change', () => {
+  document.documentElement.dataset.theme = themePicker.value;
+  try { localStorage.setItem('finance-theme', themePicker.value); } catch (_) {}
+});
+function cents(value) {
+  const normalized = value.trim().replace(',', '.');
+  if (!/^\d{1,10}(\.\d{1,2})?$$/.test(normalized)) return null;
+  const parts = normalized.split('.');
+  return Number(parts[0]) * 100 + Number((parts[1] || '').padEnd(2, '0'));
+}
+const goalMonthly = document.getElementById('goal-monthly');
+const goalSaved = document.getElementById('goal-saved');
+const defaultTarget = cents('$goal_target');
+try {
+  goalMonthly.value = localStorage.getItem('finance-goal-monthly-olya') || '';
+  goalSaved.value = localStorage.getItem('finance-goal-saved-olya') || '';
+} catch (_) {}
+function updateGoal() {
+  const monthly = goalMonthly.value.trim() ? cents(goalMonthly.value) : null;
+  const target = goalMonthly.value.trim() ? (monthly === null ? null : monthly * 6) : defaultTarget;
+  const saved = cents(goalSaved.value);
+  const status = document.getElementById('goal-status');
+  const progress = document.getElementById('goal-progress');
+  progress.hidden = true;
+  if (target === null || target <= 0) status.textContent = 'Вкажи додатну суму місячних витрат, до двох знаків після коми.';
+  else if (saved === null) status.textContent = 'Вкажи суму накопичень: невід’ємне число до двох знаків після коми.';
+  else {
+    const money = value => (value / 100).toLocaleString('uk-UA', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' zł';
+    const ratio = saved / target * 100;
+    progress.hidden = false; progress.value = Math.min(100, ratio);
+    status.textContent = money(saved) + ' із ' + money(target) + ' · ' + ratio.toFixed(1).replace('.', ',') + '% · залишилося ' + money(Math.max(0, target - saved));
+  }
+  try {
+    localStorage.setItem('finance-goal-monthly-olya', goalMonthly.value);
+    localStorage.setItem('finance-goal-saved-olya', goalSaved.value);
+  } catch (_) {}
+}
+goalMonthly.addEventListener('input', updateGoal);
+goalSaved.addEventListener('input', updateGoal);
+updateGoal();
 const descriptions = {
   shared: 'Лише спільні витрати та взаєморозрахунки. Особисті дані — у власних звітах.',
   olya: 'Особистий бюджет Олі. Місяць у трьох відповідях.',
@@ -74,8 +160,10 @@ function showMonth() {
   document.querySelectorAll('.selected-period').forEach(label => {
     label.textContent = 'Обраний період: ' + picker.selectedOptions[0].textContent;
   });
+  updateExports();
 }
 function showView(view, moveFocus = false) {
+  currentView = view;
   tabs.forEach(tab => {
     const selected = tab.dataset.view === view;
     tab.setAttribute('aria-selected', String(selected));
@@ -84,6 +172,7 @@ function showView(view, moveFocus = false) {
     if (selected && moveFocus) tab.focus();
   });
   document.getElementById('view-description').textContent = descriptions[view];
+  updateExports();
 }
 tabs.forEach((tab, index) => {
   tab.addEventListener('click', () => showView(tab.dataset.view));

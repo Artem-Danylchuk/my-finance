@@ -13,10 +13,22 @@ class Elements(HTMLParser):
     def __init__(self, html):
         super().__init__()
         self.elements = []
+        self.select_options = {}
+        self.current_select = None
         self.feed(html)
 
     def handle_starttag(self, tag, attrs):
-        self.elements.append((tag, dict(attrs)))
+        attrs = dict(attrs)
+        self.elements.append((tag, attrs))
+        if tag == "select":
+            self.current_select = attrs.get("id")
+            self.select_options[self.current_select] = []
+        elif tag == "option" and self.current_select is not None:
+            self.select_options[self.current_select].append(attrs)
+
+    def handle_endtag(self, tag):
+        if tag == "select":
+            self.current_select = None
 
 
 class ReportTests(unittest.TestCase):
@@ -56,7 +68,7 @@ class ReportTests(unittest.TestCase):
         self.assertIn("hidden", panels[0])
         self.assertNotIn("hidden", panels[1])
         self.assertEqual(sum(tag == "article" for tag, _ in elements), 6)
-        self.assertEqual(sum(tag == "option" for tag, _ in elements), 2)
+        self.assertEqual(len(Elements(html).select_options["month"]), 2)
         self.assertFalse(any("src" in attrs or "href" in attrs for _, attrs in elements))
         self.assertIn("connect-src 'none'", html)
         self.assertNotIn("fetch(", html)

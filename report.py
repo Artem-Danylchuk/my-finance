@@ -138,7 +138,7 @@ def render_report(results, through, shared_context=None):
     for month, account, amount in categories:
         categories_by_month.setdefault(month, []).append((account, amount))
     fixed_by_month = {month: (fixed_amount, variable) for month, fixed_amount, variable in fixed}
-    options, panels = [], []
+    options, panels, export_data = [], [], {}
     savings = sorted(savings)
     for month, income, expenses, saved, rate, last_operation in savings:
         category_rows = sorted(categories_by_month.get(month, []), key=lambda row: (-row[1], row[0]))
@@ -197,16 +197,48 @@ def render_report(results, through, shared_context=None):
           <div class="period"><span class="badge{' partial' if partial else ''}">{status}</span>
           <span>Остання операція: {last_operation:%d.%m.%Y}</span></div>
           {payment_note}<div class="cards">{first}{second}{third}</div></section>''')
+        from exports import encoded
+        rows = [["Показник / категорія", "Сума PLN"],
+                ["Період", month_label(month)], ["Покриття Олі", through.isoformat()],
+                ["Дохід", income], ["Витрати за своєю часткою", expenses],
+                ["Дохід мінус витрати", saved], ["Фіксовані", fixed_amount], ["Змінні", variable]]
+        rows.extend([category_label(account), amount] for account, amount in category_rows)
+        export_data[f"olya:{month}"] = encoded(rows)
+        if shared_context:
+            from household_report import month_summary
+            if (month_end >= max(shared_context["since"], shared_context["marko_start"])
+                    and month <= shared_context["marko_through"]):
+                summary = month_summary(shared_context, month)
+                export_data[f"shared:{month}"] = encoded([
+                    ["Показник", "Сума PLN / значення"], ["Період", month_label(month)],
+                    ["Дані Марка", "Вигадані"], ["Покриття Олі", min(month_end, through).isoformat()],
+                    ["Покриття Марка", min(month_end, shared_context["marko_through"]).isoformat()],
+                    ["Спільні витрати", summary.total], ["Оплати Олі", summary.olya.paid],
+                    ["Оплати Марка", summary.marko.paid], ["Частка Олі", summary.olya.share],
+                    ["Частка Марка", summary.marko.share], ["Компенсація", summary.due],
+                    ["Платник компенсації", summary.debtor or "Боргу немає"],
+                    ["Отримувач компенсації", summary.creditor or "Боргу немає"],
+                    ["Статус", "За наявними виписками; компенсації ще не внесено"],
+                ])
     template = Template((ROOT / "report_template.html").read_text(encoding="utf-8"))
     context_note = (f"Від {shared_context['since']:%d.%m.%Y} оренда та продукти враховані за твоєю часткою 50/50. "
                     f"Дані Марка вигадані, до {shared_context['marko_through']:%d.%m.%Y}; "
                     "заощадження враховують цей розподіл. Якщо виписки Марка за місяць немає, "
                     "показано твої фактичні оплати. Попередні місяці збережено."
                     if shared_context else "Наявна виписка Олі без розподілу спільних витрат.")
+    from savings import target
+    goal = target(results[QUERY_NAMES[1]], through)
+    goal_html = (f'<p>Орієнтир: <strong>{money(goal["target"])}</strong> — шість середніх місяців витрат. '
+                 f'Середнє: {money(goal["average"])}. Основа: {goal["months"]} повні місяці.</p>'
+                 '<p class="note">Історичні місяці до жовтня відображають витрати Олі до розподілу 50/50. '
+                 'Орієнтир зміниться з новими повними місяцями.</p>' if goal else
+                 '<p>Ще немає повного місяця для розрахунку цілі. Вкажи місячні витрати нижче.</p>')
     return template.substitute(options="".join(options), panels="".join(panels),
                                through=through.strftime("%d.%m.%Y"),
                                shared_panels=render_shared(shared_context, [row[0] for row in savings]),
-                               context_note=escape(context_note))
+                               context_note=escape(context_note), goal_html=goal_html,
+                               goal_target=str(goal["target"] if goal else ""),
+                               export_data=json.dumps(export_data, ensure_ascii=False).replace("<", "\\u003c"))
 
 
 def generate(ledger, output, through, household=None):
