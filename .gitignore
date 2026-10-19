@@ -1,5 +1,6 @@
 data/
 transactions.beancount
 report.html
+demo-marko.beancount
 .venv/
 __pycache__/

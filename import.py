@@ -1,5 +1,6 @@
 """Rebuild the ledger from read-only bank CSVs and rules.csv."""
 
+import argparse
 import csv
 import heapq
 import json
@@ -30,6 +31,7 @@ class Operation:
     description: str
     amount: Decimal
     balance: Decimal
+    source_id: str = ""
 
     @property
     def day(self):
@@ -125,15 +127,20 @@ def classify(op, rules):
     return ("Income:Інше" if op.amount > 0 else "Expenses:Без-Категорії"), False
 
 
-def render(operations, rules):
+def render(operations, rules, *, bank=BANK, owner=None):
     lines = ["; Згенеровано import.py. Не редагувати вручну.", ""]
     month_ends = {}
     for op in operations:
         account, fixed = classify(op, rules)
         tag = " #fixed" if fixed else ""
         description = json.dumps(op.description, ensure_ascii=False)
-        lines.extend([f"{op.day} * {description}{tag}",
-                      f"  {BANK}  {op.amount:.2f} PLN",
+        lines.append(f"{op.day} * {description}{tag}")
+        if owner is not None:
+            lines.append(f'  owner: {json.dumps(owner)}')
+            lines.append('  source: "demo-marko-csv"')
+            if op.source_id:
+                lines.append(f'  source-id: {json.dumps(op.source_id)}')
+        lines.extend([f"  {bank}  {op.amount:.2f} PLN",
                       f"  {account}  {-op.amount:.2f} PLN", ""])
         # Last row in BANK order, never maximum timestamp within the day.
         month_ends[op.day.replace(day=1)] = op
@@ -141,7 +148,7 @@ def render(operations, rules):
     for month, op in sorted(month_ends.items()):
         assertion_day = (op.day + timedelta(days=1) if month == last_month
                          else (month.replace(day=28) + timedelta(days=4)).replace(day=1))
-        lines.append(f"{assertion_day} balance {BANK} {op.balance:.2f} PLN")
+        lines.append(f"{assertion_day} balance {bank} {op.balance:.2f} PLN")
     return "\n".join(lines) + "\n"
 
 
@@ -158,7 +165,15 @@ def write_atomic(path, content):
             temporary.unlink(missing_ok=True)
 
 
-def main():
+def main(argv=()):
+    parser = argparse.ArgumentParser(description="Імпорт банківських виписок")
+    parser.add_argument("--demo-marko", action="store_true",
+                        help="імпортувати вигаданий приклад Марка в окремий демооблік")
+    args = parser.parse_args(argv)
+    if args.demo_marko:
+        from marko import generate_demo
+        generate_demo(ROOT)
+        return
     try:
         rules = read_rules(ROOT / "rules.csv")
         operations = read_operations(ROOT / "data")
@@ -173,4 +188,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(None)

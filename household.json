@@ -1,0 +1,10 @@
+{
+  "shared_since": "2026-10-01",
+  "marko": {
+    "demo": true,
+    "statement": "examples/marko.csv",
+    "opening_date": "2026-09-30",
+    "opening_balance_pln": "6200.00",
+    "through": "2026-10-15"
+  }
+}
