@@ -39,29 +39,23 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:v
 <button type="button" class="tab" id="tab-shared" role="tab" aria-selected="false" aria-controls="view-shared" tabindex="-1" data-view="shared">Загальна</button>
 <button type="button" class="tab" id="tab-olya" role="tab" aria-selected="true" aria-controls="view-olya" data-view="olya"><span class="tab-dot" aria-hidden="true"></span>Оля</button>
 <button type="button" class="tab" id="tab-marko" role="tab" aria-selected="false" aria-controls="view-marko" tabindex="-1" data-view="marko"><span class="tab-dot" aria-hidden="true"></span>Марко</button>
-</div><span class="view-hint">Локальний макет · перегляд Олі</span>
+</div><span class="view-hint">Локальний звіт · перегляд Олі</span>
 </div>
 <noscript><p>Увімкни JavaScript, щоб перемикати вкладки та місяці; зараз показано останній місяць Олі.</p></noscript>
 <div id="view-olya" role="tabpanel" aria-labelledby="tab-olya" tabindex="0">
-<div class="context"><div><strong>Твій особистий звіт</strong><p>Тут — наявна виписка Олі. Розподіл спільних витрат ще не підключено; історичні суми збережено.</p></div><span class="context-tag">Дані Олі</span></div>
+<div class="context"><div><strong>Твій особистий звіт</strong><p>$context_note</p></div><span class="context-tag">Дані Олі</span></div>
 <div id="months" aria-live="polite">$panels</div>
 </div>
 <div id="view-shared" role="tabpanel" aria-labelledby="tab-shared" tabindex="0" hidden>
-<div class="welcome"><div><p class="overline">Спільний бюджет</p><h2>Спільне — навпіл.<br>Особисте — у кожного своє.</h2><p>Оренда та спільні продукти діляться порівну. Тут будуть загальні підсумки й взаєморозрахунки між вами.</p></div>
-<div class="split"><div class="split-title">Домовленість про спільні витрати</div><div class="split-people"><span>Оля<strong>50%</strong></span><span>Марко<strong>50%</strong></span></div><div class="split-track" aria-hidden="true"><span></span><span></span></div></div>
-</div>
-<div class="period"><span class="badge partial">Спільний облік ще не підключено</span><span class="selected-period"></span></div>
-<div class="pending-grid">
-<div class="pending-card"><h3>Спільні витрати</h3><div class="pending-value" aria-label="Немає даних">—</div><p>Лише спільні покупки за місяць</p></div>
-<div class="pending-card"><h3>Оренда та продукти</h3><div class="pending-value" aria-label="Немає даних">—</div><p>Спільна сума та частка кожного</p></div>
-<div class="pending-card"><h3>Хто кому компенсує</h3><div class="pending-value" aria-label="Немає даних">—</div><p>Після врахування оплат і компенсацій</p></div>
-</div>
-<div class="next-step"><div><strong>Перший крок до спільної картини</strong><p>Потрібні виписка Марка та дата початку спільного обліку. Тут будуть лише спільні витрати; особисті витрати й доходи залишаються у власних звітах.</p></div><button type="button" class="action" data-open-olya>Переглянути свій звіт ↗</button></div>
+<div class="context"><div><strong>Демонстрація спільного бюджету</strong><p>Дані Марка вигадані. Оренда та продукти від 1 жовтня діляться 50/50; інші покупки — особисті. Підсумок попередній, доки виписки не охоплюють повний місяць.</p></div><span class="context-tag">Демо · Марко</span></div>
+<div class="selected-period period"></div>
+<div id="shared-months" aria-live="polite">$shared_panels</div>
+<div class="next-step"><div><strong>Твоя частка — у власному звіті</strong><p>Спільні покупки тут показано один раз. У твоїх витратах враховано лише твою частку. Банківський залишок збережено без змін.</p></div><button type="button" class="action" data-open-olya>Переглянути свій звіт ↗</button></div>
 </div>
 <div id="view-marko" role="tabpanel" aria-labelledby="tab-marko" tabindex="0" hidden>
 <div class="welcome"><div><p class="overline">Особистий бюджет · Марко</p><h2>Особисте залишається<br>особистим.</h2><p>Це приватна вкладка Марка. Його особисті витрати, доходи й заощадження доступні лише йому.</p></div><div class="split"><div class="split-title">Правила доступу</div><h2>Лише для Марка</h2><p>Спільні покупки та взаєморозрахунки — у загальній вкладці.</p></div></div>
 <div class="period"><span class="badge">Приватна вкладка</span><span class="selected-period"></span></div>
-<div class="next-step"><div><strong>Кожен бачить своє та спільне</strong><p>Зараз це локальний макет для Олі. Окремі входи й перевірка доступу на сервері ще попереду; даних Марка в цьому файлі немає.</p></div><button type="button" class="action" data-open-olya>Повернутися до свого звіту ↗</button></div>
+<div class="next-step"><div><strong>Кожен бачить своє та спільне</strong><p>Зараз це локальний звіт для Олі. Окремі входи й перевірка доступу на сервері ще попереду; особистих операцій, доходів і заощаджень Марка в цьому файлі немає.</p></div><button type="button" class="action" data-open-olya>Повернутися до свого звіту ↗</button></div>
 </div>
 <footer><span>Усі суми у злотих · виписка Олі до $through</span><span>Локальний звіт · працює без інтернету</span></footer>
 </main>
@@ -74,7 +68,7 @@ const descriptions = {
   marko: 'Приватна вкладка Марка. Особисті дані доступні лише власнику.'
 };
 function showMonth() {
-  document.querySelectorAll('.month-panel').forEach(panel => {
+  document.querySelectorAll('.month-panel, .shared-month-panel').forEach(panel => {
     panel.hidden = panel.dataset.month !== picker.value;
   });
   document.querySelectorAll('.selected-period').forEach(label => {

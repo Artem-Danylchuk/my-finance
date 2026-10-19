@@ -2,6 +2,7 @@
 
 import argparse
 import calendar
+import json
 import os
 from datetime import date
 from decimal import Decimal
@@ -42,8 +43,12 @@ def category_label(account):
     return account.split(":", 1)[1].replace(":", " / ").replace("-", " ").capitalize()
 
 
-def read_results(ledger):
-    entries, errors, options = loader.load_file(str(ledger))
+def read_results(ledger, adjustments=""):
+    if adjustments:
+        entries, errors, options = loader.load_string(
+            f'include {json.dumps(str(ledger.resolve()), ensure_ascii=False)}\n{adjustments}\n')
+    else:
+        entries, errors, options = loader.load_file(str(ledger))
     if errors:
         raise ValueError(f"Облік містить помилки ({len(errors)}); запусти uv run bean-check {ledger.name}")
     queries = {}
@@ -83,7 +88,47 @@ def card(index, title, headline, caption, chart, conclusion, note=""):
       {f'<p class="note">{escape(note)}</p>' if note else ''}</article>'''
 
 
-def render_report(results, through):
+def render_shared(context, months):
+    if context is None:
+        return '<p class="empty">Спільні дані не підключено.</p>'
+    from household_report import month_summary
+    panels = []
+    for month in months:
+        end = month.replace(day=calendar.monthrange(month.year, month.month)[1])
+        if end < context["since"]:
+            content = '<p class="empty">Спільний облік ще не почався. Історія Олі збережена.</p>'
+        elif end < context["marko_start"] or month > context["marko_through"]:
+            content = '<p class="empty">Немає виписки Марка за цей період. Загальний підсумок не визначено.</p>'
+        else:
+            summary = month_summary(context, month)
+            names = {"olya": "Оля", "marko": "Марко"}
+            settlement = (f"{names[summary.debtor]} → {names[summary.creditor]}: {money(summary.due)}"
+                          if summary.debtor else "Усе порівну — компенсація не потрібна.")
+            coverage = min(context["olya_through"], context["marko_through"], end)
+            partial = (coverage < end or context["marko_start"] > month or context["since"] > month)
+            status = f"{'Неповний місяць' if partial else 'Повний місяць'} · спільне покриття до {coverage:%d.%m.%Y}"
+            categories = {}
+            for expense in context["expenses"]:
+                if expense.day.replace(day=1) == month:
+                    categories[expense.category] = categories.get(expense.category, ZERO) + expense.amount
+            chart = bars([(category_label(account), amount, "teal")
+                          for account, amount in sorted(categories.items())], "Спільні витрати")
+            content = f'''<div class="period"><span class="badge{' partial' if partial else ''}">{status}</span>
+              <span>Оплати Олі до {min(end, context['olya_through']):%d.%m.%Y}; Марка до {min(end, context['marko_through']):%d.%m.%Y}</span></div>
+              <p class="note">Дані Марка вигадані · компенсації ще не внесено. Враховано всі наявні оплати кожного за його період покриття.</p><div class="cards">'''
+            content += card(1, "Спільні витрати", money(summary.total), "Оренда та продукти · 50/50", chart,
+                            "Кожна покупка врахована один раз. Частки округлюються до гроша для кожної покупки.")
+            content += card(2, "Хто скільки оплатив", money(summary.olya.paid), "Фактично оплатила Оля",
+                            bars([("Оля", summary.olya.paid, "teal"), ("Марко", summary.marko.paid, "orange")], "Оплати"),
+                            f"Частка Олі — {money(summary.olya.share)}; Марка — {money(summary.marko.share)}.")
+            content += card(3, "Хто кому компенсує", money(summary.due), "За обраний місяць",
+                            "", settlement, "Борг інших місяців не переноситься.") + '</div>'
+        panels.append(f'<div class="shared-month-panel" data-month="{month}"'
+                      f'{"" if month == months[-1] else " hidden"}>{content}</div>')
+    return ''.join(panels)
+
+
+def render_report(results, through, shared_context=None):
     categories, savings, fixed = (results[name] for name in QUERY_NAMES)
     if not savings:
         raise ValueError("Немає місяців із доходами або витратами")
@@ -143,19 +188,35 @@ def render_report(results, through):
         fixed_caption = f"Фіксовані витрати · {percent(fixed_rate)} від усіх витрат" if expenses else "Фіксовані витрати · частка не визначена"
         third = card(3, "Скільки витрат можу змінювати?", money(fixed_amount), fixed_caption,
                      fixed_chart, f"За поточним розподілом змінні витрати становлять {money(variable)}.", note)
+        payment_note = (f'<p class="note">Витрати, оплачені з твого банку: '
+                        f'{money(shared_context["paid_by_month"].get(month, ZERO))}. '
+                        f'Твої витрати після розподілу: {money(expenses)}.</p>'
+                        if shared_context else "")
         panels.append(f'''<section class="month-panel" id="month-{month}" data-month="{month}"
           aria-label="{month_label(month)}"{'' if active else ' hidden'}>
           <div class="period"><span class="badge{' partial' if partial else ''}">{status}</span>
           <span>Остання операція: {last_operation:%d.%m.%Y}</span></div>
-          <div class="cards">{first}{second}{third}</div></section>''')
+          {payment_note}<div class="cards">{first}{second}{third}</div></section>''')
     template = Template((ROOT / "report_template.html").read_text(encoding="utf-8"))
+    context_note = (f"Від {shared_context['since']:%d.%m.%Y} оренда та продукти враховані за твоєю часткою 50/50. "
+                    f"Дані Марка вигадані, до {shared_context['marko_through']:%d.%m.%Y}; "
+                    "заощадження враховують цей розподіл. Якщо виписки Марка за місяць немає, "
+                    "показано твої фактичні оплати. Попередні місяці збережено."
+                    if shared_context else "Наявна виписка Олі без розподілу спільних витрат.")
     return template.substitute(options="".join(options), panels="".join(panels),
-                               through=through.strftime("%d.%m.%Y"))
+                               through=through.strftime("%d.%m.%Y"),
+                               shared_panels=render_shared(shared_context, [row[0] for row in savings]),
+                               context_note=escape(context_note))
 
 
-def generate(ledger, output, through):
+def generate(ledger, output, through, household=None):
     # Finish loading, validating, querying, and rendering before replacing the previous report.
-    content = render_report(read_results(ledger), through)
+    context = None
+    if household is not None:
+        from household_report import load_context
+        context = load_context(ledger, household, through)
+    content = render_report(read_results(ledger, context["adjustments"] if context else ""),
+                            through, context)
     temporary = None
     try:
         with NamedTemporaryFile("w", encoding="utf-8", dir=output.parent,
@@ -174,7 +235,8 @@ def main():
                         help="підтверджена дата покриття виписки, YYYY-MM-DD")
     args = parser.parse_args()
     try:
-        generate(ROOT / "main.beancount", ROOT / "report.html", args.through)
+        generate(ROOT / "main.beancount", ROOT / "report.html", args.through,
+                 household=ROOT / "household.json")
     except Exception as exc:
         raise SystemExit(f"Не вдалося створити звіт: {exc}") from exc
     print(f"Створено {ROOT / 'report.html'}; дані до {args.through:%d.%m.%Y}.")
