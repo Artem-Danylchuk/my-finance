@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Наші гроші{% endblock %}</title>
+  <style>
+    :root { color-scheme: light; --ink:#173b3d; --muted:#617573; --line:#dce6df; --green:#17645e; --paper:#f4f5ef; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px/1.5 system-ui,sans-serif; background:var(--paper); color:var(--ink); }
+    a { color:var(--green); text-underline-offset:3px; }
+    header,main,footer { max-width:1060px; margin:auto; padding:24px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+    .brand { font-size:21px; font-weight:750; text-decoration:none; letter-spacing:-.7px; }
+    .eyebrow { font-size:12px; text-transform:uppercase; letter-spacing:2px; color:var(--muted); margin:0 0 8px; }
+    h1 { font-size:clamp(30px,5vw,46px); line-height:1.1; letter-spacing:-1.5px; margin:0 0 12px; }
+    h2 { font-size:23px; line-height:1.2; letter-spacing:-.5px; margin:0 0 16px; }
+    h3 { margin:0 0 12px; font-size:17px; }
+    p { margin:0 0 14px; }
+    .muted { color:var(--muted); font-size:14px; }
+    .panel,.metric { padding:24px; border:1px solid var(--line); border-radius:20px; background:white; }
+    .panel { margin:24px 0; }
+    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:24px 0; }
+    .metric strong { display:block; font-size:clamp(22px,3vw,29px); line-height:1.2; letter-spacing:-1px; margin-top:10px; }
+    .metric:first-child { background:var(--green); color:white; border-color:var(--green); }
+    .metric span { font-size:13px; }
+    .grid { display:grid; grid-template-columns:1.15fr 1fr; gap:24px; align-items:start; }
+    .grid .panel { margin-top:0; }
+    .row { display:flex; justify-content:space-between; gap:16px; align-items:center; }
+    .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    label { display:block; font-size:14px; font-weight:600; margin-bottom:14px; }
+    input,select,button { font:inherit; border-radius:10px; }
+    input,select { width:100%; padding:11px 12px; color:var(--ink); background:white; border:1px solid #b8cbc3; margin-top:6px; min-height:46px; }
+    input:focus,select:focus,button:focus-visible,a:focus-visible { outline:3px solid #8dbdad; outline-offset:3px; }
+    button,.button { background:var(--green); color:white; border:0; padding:12px 18px; min-height:46px; cursor:pointer; font-weight:650; }
+    button.secondary { color:var(--green); background:#e8efea; }
+    .pill { display:inline-block; border-radius:30px; padding:5px 12px; background:#e5eee7; font-size:13px; }
+    .period { max-width:230px; }
+    .category-row { padding:12px 0; border-bottom:1px solid var(--line); }
+    .category-row:last-child { border:0; }
+    progress { width:100%; height:7px; border:0; border-radius:20px; margin-top:8px; accent-color:var(--green); }
+    progress::-webkit-progress-bar { background:#edf1eb; border-radius:20px; }
+    progress::-webkit-progress-value { background:var(--green); border-radius:20px; }
+    .notice { border-left:4px solid #8cae9a; background:#e6eee5; padding:15px 18px; border-radius:8px; margin:20px 0; }
+    .error { background:#fff0e9; border-color:#ba7049; }
+    .login { max-width:480px; margin:6vh auto; }
+    .login button,.full { width:100%; }
+    table { border-collapse:collapse; width:100%; font-size:14px; }
+    th,td { text-align:left; padding:12px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+    td:last-child,th:last-child { text-align:right; white-space:nowrap; }
+    .scroll { overflow-x:auto; }
+    details summary { cursor:pointer; font-weight:650; margin:12px 0; }
+    footer { color:var(--muted); font-size:13px; }
+    .logout { margin:0; }
+    .amount { white-space:nowrap; }
+    @media(max-width:700px) {
+      header,main,footer { padding:18px; }
+      .metrics { grid-template-columns:1fr 1fr; }
+      .grid { grid-template-columns:1fr; gap:0; }
+      .panel,.metric { padding:18px; }
+      .hero { display:block; }
+      .period { max-width:none; margin-top:20px; }
+      .split { grid-template-columns:1fr; gap:0; }
+      .row strong { text-align:right; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">Наші гроші<span aria-hidden="true"> ·</span></a>
+    {% if session.get('owner') %}
+      <form class="logout" action="/logout" method="post">
+        <input type="hidden" name="csrf" value="{{ session.csrf }}">
+        <button class="secondary" type="submit">Вийти</button>
+      </form>
+    {% else %}<span class="pill">Навчальне демо</span>{% endif %}
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>Тільки штучні дані з домашнього завдання. Особисті витрати партнера залишаються приватними.</footer>
+</body>
+</html>

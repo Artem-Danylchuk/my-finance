@@ -127,7 +127,7 @@ def classify(op, rules):
     return ("Income:Інше" if op.amount > 0 else "Expenses:Без-Категорії"), False
 
 
-def render(operations, rules, *, bank=BANK, owner=None):
+def render(operations, rules, *, bank=BANK, owner=None, source="demo-marko-csv"):
     lines = ["; Згенеровано import.py. Не редагувати вручну.", ""]
     month_ends = {}
     for op in operations:
@@ -137,7 +137,7 @@ def render(operations, rules, *, bank=BANK, owner=None):
         lines.append(f"{op.day} * {description}{tag}")
         if owner is not None:
             lines.append(f'  owner: {json.dumps(owner)}')
-            lines.append('  source: "demo-marko-csv"')
+            lines.append(f'  source: {json.dumps(source)}')
             if op.source_id:
                 lines.append(f'  source-id: {json.dumps(op.source_id)}')
         lines.extend([f"  {bank}  {op.amount:.2f} PLN",

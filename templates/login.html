@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Вхід · Наші гроші{% endblock %}
+{% block content %}
+<section class="panel login">
+  <p class="eyebrow">Бюджет для двох</p>
+  <h1>Вітаємо вдома.</h1>
+  <p class="muted">Увійди, щоб побачити свої та спільні витрати.</p>
+  {% if error %}<p class="notice error" role="alert">{{ error }}</p>{% endif %}
+  <form action="/login" method="post">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <label>Логін<input name="username" autocomplete="username" autocapitalize="none" required maxlength="20" placeholder="olya або marko"></label>
+    <label>Пароль<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label>
+    <button type="submit">Увійти</button>
+  </form>
+</section>
+{% endblock %}

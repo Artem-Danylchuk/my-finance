@@ -1,0 +1,3 @@
+# Keep the provided synthetic bank exports byte-for-byte, including CSV CRLF.
+fixtures/*.csv -text whitespace=cr-at-eol
+fixtures/olya/*.csv -text whitespace=cr-at-eol

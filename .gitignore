@@ -5,4 +5,8 @@ demo-marko.beancount
 .venv/
 __pycache__/
 .env.local
+.env.local.*
 .private/
+hosting-site/
+marko.beancount
+.DS_Store

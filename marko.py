@@ -3,6 +3,7 @@
 import csv
 import importlib
 import json
+import hashlib
 from datetime import date, datetime
 from decimal import InvalidOperation
 
@@ -10,6 +11,60 @@ from beancount import loader
 
 importer = importlib.import_module("import")
 BANK = "Assets:Банк-Марко"
+
+
+def read_homework_statement(path):
+    """Read the assignment's synthetic bank export, newest booking first.
+
+    Reverse the bank's rows rather than sorting dates: same-day balance order
+    is significant. Operation date is informational; accounting uses booking.
+    """
+    def money(text):
+        return importer.money(text.replace(" ", "").replace("\u00a0", "").replace(",", "."))
+
+    with path.open(encoding="utf-8-sig", newline="") as stream:
+        rows = list(csv.reader(stream, delimiter=";"))
+    expected = ["Data operacji", "Data księgowania", "Typ operacji", "Opis", "Kwota", "Saldo po operacji"]
+    header = next((i for i, row in enumerate(rows) if row == expected), None)
+    if header is None:
+        raise ValueError("У виписці Марка немає очікуваного заголовка")
+    meta = {row[0]: row[1] for row in rows[:header] if len(row) == 2}
+    if meta.get("Waluta") != "PLN":
+        raise ValueError("Підтримується лише виписка Марка у PLN")
+    try:
+        start, end = meta["Okres"].split(" - ")
+        start, through = (datetime.strptime(x, "%d.%m.%Y").date() for x in (start, end))
+        balance = initial = money(meta["Saldo początkowe"])
+    except (KeyError, ValueError, InvalidOperation) as exc:
+        raise ValueError("Некоректний період або початковий залишок Марка") from exc
+    operations, seen = [], set()
+    previous = start
+    for line, row in reversed(list(enumerate(rows[header + 1:], header + 2))):
+        if not row:
+            continue
+        try:
+            if len(row) != 6:
+                raise ValueError("очікуються шість колонок")
+            completed = datetime.strptime(row[1], "%d.%m.%Y")
+            datetime.strptime(row[0], "%d.%m.%Y")
+            identifier = hashlib.sha256(json.dumps(row, ensure_ascii=False).encode()).hexdigest()
+            if identifier in seen:
+                continue
+            if not start <= completed.date() <= through or completed.date() < previous:
+                raise ValueError("порушено період або порядок банку")
+            amount, after = money(row[4]), money(row[5])
+            if balance + amount != after:
+                raise ValueError("залишок не узгоджується із сумою операції")
+            if not row[3].strip():
+                raise ValueError("порожній опис")
+            operations.append(importer.Operation(completed, row[3].strip(), amount, after, identifier))
+            seen.add(identifier)
+            balance, previous = after, completed.date()
+        except (ValueError, InvalidOperation) as exc:
+            raise ValueError(f"{path}:{line}: {exc}") from exc
+    if not operations:
+        raise ValueError("Виписка Марка не містить операцій")
+    return operations, start, through, initial
 
 
 def read_operations(path, *, opening_date, opening_balance, through):

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row hero">
+  <div>
+    <p class="eyebrow">Місячний огляд · {{ name }}</p>
+    <h1>Гроші під контролем.</h1>
+    <p class="muted">Твої фактичні оплати й окремо — наш бюджет навпіл.</p>
+  </div>
+  <form class="period" action="/" method="get">
+    <label for="month">Місяць
+      <select id="month" name="month">
+        {% for m in months %}<option value="{{ m.strftime('%Y-%m') }}" {% if m == month %}selected{% endif %}>{{ labels.get(m.month, m.strftime('%m')) }} {{ m.year }}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="secondary full" type="submit">Показати</button>
+  </form>
+</div>
+{% for kind, message in get_flashed_messages(with_categories=true) %}
+  <p class="notice {{ 'error' if kind == 'error' else '' }}" role="status">{{ message }}</p>
+{% endfor %}
+<div class="notice">
+  {% if month >= through.replace(day=1) %}<strong>Неповний банківський місяць.</strong> Виписки до {{ through.strftime('%d.%m.%Y') }}; пізніші готівкові записи враховано за фактом.
+  {% else %}<strong>Повний банківський місяць.</strong> Усі показники нижче включають твої збережені готівкові витрати.{% endif %}
+</div>
+<div class="metrics">
+  <div class="metric"><span>Мої витрати</span><strong>{{ own.expenses|pln }}</strong></div>
+  <div class="metric"><span>Дохід</span><strong>{{ own.income|pln }}</strong></div>
+  <div class="metric"><span>Норма заощаджень</span><strong>{% if own.rate is not none %}{{ '%.1f'|format(own.rate) }}%{% else %}—{% endif %}</strong></div>
+  <div class="metric"><span>Дохід мінус витрати</span><strong>{{ own.saved|pln }}</strong></div>
+</div>
+{% if own.rate is none %}<p class="muted">У цьому місяці немає доходу у виписці, тому норму заощаджень не визначено.</p>{% endif %}
+<div class="grid">
+  <section class="panel">
+    <h2>Куди пішли гроші</h2>
+    {% for category, total in own.categories %}
+      <div class="category-row">
+        <div class="row"><span>{{ category|category }}</span><strong class="amount">{{ total|pln }}</strong></div>
+        <progress value="{{ total if total > 0 else 0 }}" max="{{ own.expenses if own.expenses > 0 else 1 }}" aria-label="{{ category|category }}"></progress>
+      </div>
+    {% else %}<p class="muted">Витрат за цей місяць ще немає.</p>{% endfor %}
+  </section>
+  <div>
+    <section class="panel">
+      <h2>Що можу змінити</h2>
+      <div class="category-row row"><span>Фіксовані</span><strong>{{ own.fixed|pln }}</strong></div>
+      <div class="category-row row"><span>Змінні</span><strong>{{ own.variable|pln }}</strong></div>
+      <p class="muted">Готівка додається до змінних витрат. Компенсація за спільні покупки не є новою витратою.</p>
+    </section>
+    <section class="panel">
+      <p class="eyebrow">Оренда та продукти · 50/50</p>
+      <h2>Наші спільні витрати</h2>
+      <div class="category-row row"><span>Разом</span><strong>{{ shared.total|pln }}</strong></div>
+      <div class="category-row row"><span>Оплатила Оля</span><strong>{{ shared.olya.paid|pln }}</strong></div>
+      <div class="category-row row"><span>Оплатив Марко</span><strong>{{ shared.marko.paid|pln }}</strong></div>
+      <div class="category-row row"><span>Моя частка</span><strong>{{ (shared.olya.share if owner == 'olya' else shared.marko.share)|pln }}</strong></div>
+      <p class="notice">{% if shared.debtor %}{{ names[shared.debtor] }} → {{ names[shared.creditor] }}: <strong>{{ shared.due|pln }}</strong>{% else %}Усе порівну — компенсація не потрібна.{% endif %}</p>
+      <p class="muted">Попередній борг і фактичні перекази компенсацій сюди не внесено. Інтернет та світло не ділимо без окремої домовленості.</p>
+    </section>
+  </div>
+</div>
+<section class="panel" id="add-cash">
+  <p class="eyebrow">Покупка поза банківською випискою</p>
+  <h2>Додати готівкову витрату</h2>
+  <form action="/cash" method="post">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <input type="hidden" name="id" value="{{ form_id }}">
+    <div class="split">
+      <label>Сума, PLN<input name="amount" inputmode="decimal" placeholder="1,00" required maxlength="12"></label>
+      <label>Дата<input name="day" type="date" value="{{ default_day }}" min="2026-08-01" max="{{ today }}" required></label>
+    </div>
+    <label>Опис<input name="description" placeholder="Наприклад, кава за готівку" required maxlength="160"></label>
+    <div class="split">
+      <label>Категорія<select name="category">{% for c in categories %}<option value="{{ c }}" {% if c == 'Expenses:Продукти' %}selected{% endif %}>{{ c|category }}</option>{% endfor %}</select></label>
+      <label>Чия витрата<select name="shared"><option value="personal">Моя особиста</option><option value="shared">Спільна: оренда або продукти</option></select></label>
+    </div>
+    <button type="submit">Зберегти витрату</button>
+    <p class="muted">Платник — {{ name }}. Запис збережеться після перезавантаження; банківський залишок не зміниться.</p>
+  </form>
+</section>
+<section class="panel">
+  <h2>Моя готівка за місяць</h2>
+  {% if own.cash %}<div class="scroll"><table>
+    <thead><tr><th>Дата й опис</th><th>Категорія</th><th>Сума</th></tr></thead>
+    <tbody>{% for r in own.cash %}<tr><td>{{ r.day.strftime('%d.%m') }} · {{ r.description }}{% if r.shared %}<br><span class="muted">Спільна</span>{% endif %}</td><td>{{ r.category|category }}</td><td>{{ r.amount|pln }}</td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<p class="muted">Готівкових записів ще немає. Додай перший вище.</p>{% endif %}
+  <p><a href="/cash.beancount">Завантажити свій готівковий облік</a></p>
+</section>
+<section class="panel">
+  <details><summary>Контрольні суми моєї банківської виписки</summary>
+    <p class="muted">Змінні витрати без ручних записів і перерозподілу. Додавання готівки не змінює ці контрольні значення.</p>
+    {% for m, total in controls %}<p class="row"><span>{{ labels[m] }} 2026</span><strong>{{ total|pln }}</strong></p>{% endfor %}
+  </details>
+</section>
+{% endblock %}
