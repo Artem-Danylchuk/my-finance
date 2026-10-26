@@ -107,13 +107,21 @@ def structured(instructions, text, output_schema, image=None):
             "input": [{"role": "user", "content": content}], "max_output_tokens": 1200,
             "text": {"format": {"type": "json_schema", "name": "finance_result",
                                   "strict": True, "schema": output_schema}}}
+    if model == "gpt-6-luna":
+        body["reasoning"] = {"effort": "none"}
     request = Request("https://api.openai.com/v1/responses",
                       data=json.dumps(body).encode(),
                       headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
     try:
         with urlopen(request, timeout=45) as response:
             result = json.load(response)
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except HTTPError as exc:
+        messages = {401: "OpenAI не прийняв ключ. Додай чинний API-ключ, а не токен входу ChatGPT.",
+                    403: "Цей API-ключ не має доступу до вибраної моделі.",
+                    404: "Модель недоступна цьому API-акаунту. Потрібно змінити OPENAI_MODEL.",
+                    429: "OpenAI обмежив запити або вичерпано API-баланс. Перевір оплату API та ліміти."}
+        raise ValueError(messages.get(exc.code, "OpenAI тимчасово недоступний. Спробуй пізніше.")) from None
+    except (URLError, TimeoutError):
         raise ValueError("AI-сервіс недоступний або відхилив запит. Перевірте локальні налаштування.") from None
     if result.get("status") != "completed":
         raise ValueError("Модель не завершила відповідь; жодних змін не внесено.")

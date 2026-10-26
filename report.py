@@ -221,10 +221,8 @@ def render_report(results, through, shared_context=None):
                     ["Статус", "За наявними виписками; компенсації ще не внесено"],
                 ])
     template = Template((ROOT / "report_template.html").read_text(encoding="utf-8"))
-    context_note = (f"Від {shared_context['since']:%d.%m.%Y} оренда та продукти враховані за твоєю часткою 50/50. "
-                    f"Дані Марка вигадані, до {shared_context['marko_through']:%d.%m.%Y}; "
-                    "заощадження враховують цей розподіл. Якщо виписки Марка за місяць немає, "
-                    "показано твої фактичні оплати. Попередні місяці збережено."
+    context_note = (f"Оренда й продукти 50/50 від {shared_context['since']:%d.%m.%Y}. "
+                    "Дані Марка вигадані."
                     if shared_context else "Наявна виписка Олі без розподілу спільних витрат.")
     from savings import target
     goal = target(results[QUERY_NAMES[1]], through)

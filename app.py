@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 import ai_features
 import report
-from local_settings import setting
+from local_settings import setting, save_openai_key
 
 
 def ai_status():
@@ -23,7 +23,7 @@ def ai_status():
     labels = {"openai": "OpenAI", "ollama": "Ollama", "lmstudio": "LM Studio"}
     if provider == "openai":
         configured = bool(setting("OPENAI_API_KEY") and setting("OPENAI_MODEL"))
-        message = "Додай API-ключ і назву моделі у .env.local, потім онови сторінку."
+        message = "Додай ключ OpenAI нижче."
     elif provider in {"ollama", "lmstudio"}:
         configured = bool(setting("AI_MODEL"))
         message = "Вкажи встановлену модель у .env.local, запусти її локальний сервер і онови сторінку."
@@ -31,7 +31,7 @@ def ai_status():
         configured = False
         message = "Вибери підтримуваний AI_PROVIDER у .env.local."
     return {"configured": configured, "provider": labels.get(provider, "Не налаштовано"),
-            "message": "Можна поставити питання про свої або спільні витрати." if configured else message}
+            "message": "Готовий до запитань." if configured else message}
 
 
 def make_handler(through, port):
@@ -85,7 +85,8 @@ def make_handler(through, port):
         def do_POST(self):
             if not self.local_host():
                 return
-            if urlsplit(self.path).path != "/api/ask":
+            path = urlsplit(self.path).path
+            if path not in {"/api/ask", "/api/settings"}:
                 self.respond(404, {"error": "Невідомий запит."})
                 return
             if (self.headers.get("Origin") not in origins
@@ -102,6 +103,16 @@ def make_handler(through, port):
                     return
                 self.connection.settimeout(10)
                 payload = json.loads(self.rfile.read(length))
+                if path == "/api/settings":
+                    if not isinstance(payload, dict) or set(payload) != {"key"}:
+                        raise ValueError("Некоректний ключ.")
+                    try:
+                        save_openai_key(payload["key"])
+                    except ValueError as exc:
+                        self.respond(400, {"error": str(exc)})
+                        return
+                    self.respond(200, ai_status())
+                    return
                 if not isinstance(payload, dict) or set(payload) != {"question", "month", "scope"}:
                     raise ValueError("Некоректні поля питання.")
                 question, scope = payload["question"], payload["scope"]
