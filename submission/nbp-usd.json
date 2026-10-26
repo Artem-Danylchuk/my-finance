@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-26T11:31:00+02:00",
+  "requested_date": "2026-10-26",
+  "requested_date_response": "404 NotFound - Not Found - Brak danych",
+  "source": "https://api.nbp.pl/api/exchangerates/rates/a/usd/2026-10-23/?format=json",
+  "response": {
+    "table": "A",
+    "currency": "dolar amerykański",
+    "code": "USD",
+    "rates": [{"no": "207/A/NBP/2026", "effectiveDate": "2026-10-23", "mid": 3.9247}]
+  }
+}
